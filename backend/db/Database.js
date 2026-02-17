@@ -15,7 +15,7 @@ const mongoose = require("mongoose");
 
 const connectDatabase = () => {
   return mongoose
-    .connect('mongodb+srv://testingyou9966:Pakistan9786@blovedbidding.6eg17.mongodb.net/?appName=blovedbidding', {
+    .connect('DB URL', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     })
