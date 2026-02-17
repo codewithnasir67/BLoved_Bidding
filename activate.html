@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Activation - BLoved Bidding</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #D2691E 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #8B4513; margin-bottom: 20px; text-align: center; }
+        .status {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .loading { background: #FFF8E7; color: #8B4513; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #FFB347;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        button {
+            background: linear-gradient(135deg, #FFB347, #FFA500);
+            color: #8B4513;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { opacity: 0.9; }
+        #debug {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .debug-line { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 BLoved Bidding</h1>
+        <h2 style="text-align: center; color: #666; font-size: 18px; margin-bottom: 30px;">Account Activation</h2>
+        
+        <div id="status" class="status loading">
+            <div class="spinner"></div>
+            <p>Activating your account...</p>
+        </div>
+
+        <div id="buttons" style="text-align: center; display: none;">
+            <button onclick="window.location.href='http://localhost:3000'">Go to Home</button>
+            <button onclick="window.location.href='http://localhost:3000/sign-up'">Sign Up Again</button>
+        </div>
+
+        <div id="debug"></div>
+    </div>
+
+    <script>
+        const debugDiv = document.getElementById('debug');
+        const statusDiv = document.getElementById('status');
+        const buttonsDiv = document.getElementById('buttons');
+
+        function addDebug(message) {
+            console.log(message);
+            const line = document.createElement('div');
+            line.className = 'debug-line';
+            line.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            debugDiv.appendChild(line);
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+        }
+
+        async function activateAccount() {
+            try {
+                // Get token from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token') || window.location.pathname.split('/').pop();
+                
+                addDebug('Starting activation...');
+                addDebug(`Token: ${token.substring(0, 30)}...`);
+                addDebug('Making API request to: http://localhost:8000/api/v2/user/activation');
+
+                const response = await fetch('http://localhost:8000/api/v2/user/activation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ activation_token: token })
+                });
+
+                addDebug(`Response status: ${response.status}`);
+                const data = await response.json();
+                addDebug(`Response data: ${JSON.stringify(data)}`);
+
+                if (response.ok) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `
+                        <h2>✅ Success!</h2>
+                        <p>Your account has been activated successfully!</p>
+                        <p style="margin-top: 10px; font-size: 14px;">Redirecting to home page...</p>
+                    `;
+                    addDebug('Activation successful!');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'http://localhost:3000';
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Activation failed');
+                }
+            } catch (error) {
+                addDebug(`ERROR: ${error.message}`);
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `
+                    <h2>❌ Activation Failed</h2>
+                    <p>${error.message}</p>
+                    <p style="margin-top: 10px; font-size: 14px;">The token may have expired (5 minute limit) or is invalid.</p>
+                `;
+                buttonsDiv.style.display = 'block';
+            }
+        }
+
+        // Start activation when page loads
+        activateAccount();
+    </script>
+</body>
+</html>
